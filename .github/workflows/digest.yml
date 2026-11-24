@@ -1,8 +1,14 @@
 # Sends the ePrint digest email every Monday.
 #
-# Needs two repository secrets (Settings → Secrets and variables → Actions):
-#   DIGEST_CONFIG                 full contents of your config.toml
-#   EPRINT_DIGEST_SMTP_PASSWORD   the Gmail app password for [email] from
+# Needs, under Settings → Secrets and variables → Actions:
+#   Variable  DIGEST_FILTER_CONFIG          the [filter] section of your config.toml
+#   Secret    DIGEST_EMAIL_CONFIG           the [email] section of your config.toml
+#   Secret    EPRINT_DIGEST_SMTP_PASSWORD   the Gmail app password for [email] from
+#
+# The config is split because variables are shown unmasked in run logs
+# (including each step's env), and logs of public repos are public. Filters
+# are fine to show and are easy to edit as a variable; email addresses are
+# kept in a secret so they're masked.
 
 name: Weekly ePrint digest
 
@@ -31,15 +37,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Write config from secret
+      - name: Write config from variable + secret
         env:
-          DIGEST_CONFIG: ${{ secrets.DIGEST_CONFIG }}
+          DIGEST_FILTER_CONFIG: ${{ vars.DIGEST_FILTER_CONFIG }}
+          DIGEST_EMAIL_CONFIG: ${{ secrets.DIGEST_EMAIL_CONFIG }}
         run: |
-          if [ -z "$DIGEST_CONFIG" ]; then
-            echo "::error::The DIGEST_CONFIG secret is not set"
+          if [ -z "$DIGEST_EMAIL_CONFIG" ]; then
+            echo "::error::The DIGEST_EMAIL_CONFIG secret is not set"
             exit 1
           fi
-          printf '%s\n' "$DIGEST_CONFIG" > "$RUNNER_TEMP/config.toml"
+          # An unset filter variable just means "no filters": send everything.
+          printf '%s\n\n%s\n' "$DIGEST_FILTER_CONFIG" "$DIGEST_EMAIL_CONFIG" \
+            > "$RUNNER_TEMP/config.toml"
 
       - name: Fetch, filter, and send digest
         env:

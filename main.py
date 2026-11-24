@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
@@ -22,6 +23,12 @@ from config import Config, load_config
 from email_digest import PASSWORD_ENV, build_message, send
 from filters import Filter
 from harvest import harvest
+
+
+def _redact(addr: str) -> str:
+    """"example@example.com" -> "e******@example.com"."""
+    user, at, domain = addr.partition("@")
+    return f"{user[:1]}{'*' * max(len(user) - 1, 1)}{at}{domain}"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -107,7 +114,11 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as e:
                 print(f"error: sending failed: {e}", file=sys.stderr)
                 return 1
-            print(f"sent {msg['Subject']!r} to {msg['To']}", file=sys.stderr)
+            to = cfg.email.to
+            # Logs of GitHub Actions runs are public for public repos.
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                to = [_redact(a) for a in to]
+            print(f"sent {msg['Subject']!r} to {', '.join(to)}", file=sys.stderr)
         return 0
 
     if args.json:
