@@ -20,7 +20,7 @@ A paper is kept if it matches **any** keyword or author. Omit a key to disable t
 ## Run locally
 
 ```bash
-python3 main.py -k lattice -a Ostrovsky          # filters as flags
+python3 main.py -k lattice -a MyFavAuthor          # filters as flags
 python3 main.py -c config.toml                   # filters from config
 python3 main.py -c config.toml --days 3          # or --since 2026-11-20
 python3 main.py -c config.toml --json            # full records as JSON
