@@ -1,0 +1,53 @@
+# Sends the ePrint digest email every Monday.
+#
+# Needs two repository secrets (Settings → Secrets and variables → Actions):
+#   DIGEST_CONFIG                 full contents of your config.toml
+#   EPRINT_DIGEST_SMTP_PASSWORD   the Gmail app password for [email] from
+
+name: Weekly ePrint digest
+
+on:
+  schedule:
+    # Cron times are UTC: 12:00 UTC Monday = 7am EST / 8am EDT.
+    # GitHub may start scheduled runs some minutes late.
+    - cron: "0 12 * * 1"
+  # Adds a "Run workflow" button on the Actions tab, for testing.
+  workflow_dispatch:
+
+# The job only needs to read the code.
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Write config from secret
+        env:
+          DIGEST_CONFIG: ${{ secrets.DIGEST_CONFIG }}
+        run: |
+          if [ -z "$DIGEST_CONFIG" ]; then
+            echo "::error::The DIGEST_CONFIG secret is not set"
+            exit 1
+          fi
+          printf '%s\n' "$DIGEST_CONFIG" > "$RUNNER_TEMP/config.toml"
+
+      - name: Fetch, filter, and send digest
+        env:
+          EPRINT_DIGEST_SMTP_PASSWORD: ${{ secrets.EPRINT_DIGEST_SMTP_PASSWORD }}
+        # Start at 12:00 UTC seven days ago, not "exactly 7 days before now",
+        # so a late start this week can't leave a gap after last week's run.
+        run: |
+          python main.py \
+            --config "$RUNNER_TEMP/config.toml" \
+            --since "$(date -u -d '7 days ago' +%Y-%m-%dT12:00:00)" \
+            --send
