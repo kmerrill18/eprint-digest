@@ -39,7 +39,7 @@ If you're not seeing the email, check your spam folder. First emails may land in
 
 ## Run on GitHub Actions
 
-`.github/workflows/digest.yml` sends the digest Mondays at 12:00 UTC. In **Settings → Secrets and variables → Actions**, add:
+`.github/workflows/digest.yml` sends the digest Mondays at 12:00 UTC. Edit this file to send on the schedule you prefer. In **Settings → Secrets and variables → Actions**, add:
 
 | Name | Type | Value |
 |---|---|---|
