@@ -3,7 +3,7 @@
 # Needs, under Settings → Secrets and variables → Actions:
 #   Variable  DIGEST_FILTER_CONFIG          the [filter] section of your config.toml
 #   Secret    DIGEST_EMAIL_CONFIG           the [email] section of your config.toml
-#   Secret    EPRINT_DIGEST_SMTP_PASSWORD   the Gmail app password for [email] from
+#   Secret    SMTP_PASSWORD                 the Gmail app password for [email] from
 #
 # The config is split because variables are shown unmasked in run logs
 # (including each step's env), and logs of public repos are public. Filters
@@ -52,7 +52,7 @@ jobs:
 
       - name: Fetch, filter, and send digest
         env:
-          EPRINT_DIGEST_SMTP_PASSWORD: ${{ secrets.EPRINT_DIGEST_SMTP_PASSWORD }}
+          EPRINT_DIGEST_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         # Start at 12:00 UTC seven days ago, not "exactly 7 days before now",
         # so a late start this week can't leave a gap after last week's run.
         run: |
