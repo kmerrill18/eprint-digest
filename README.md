@@ -13,7 +13,7 @@ cp config.example.toml config.toml   # git-ignored; edit filters and email
 ```
 
 - `keywords`: regexes matched against title + abstract. Case and accents are ignored; use `(?-i:...)` for case-sensitive.
-- `authors`: plain text matched against author names.
+- `authors`: `Lastname` or `Firstname Lastname`, as spelled on ePrint. Case and accents are ignored. Use full names for common surnames: `Li` also matches `Lin`.
 
 A paper is kept if it matches **any** keyword or author. Omit a key to disable that filter.
 

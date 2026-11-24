@@ -3,7 +3,7 @@
 Examples:
     python3 main.py                                   # everything from the last 7 days
     python3 main.py --keyword lattice --keyword '\\bMPC\\b'
-    python3 main.py --author Ostrovsky --since 2026-11-20
+    python3 main.py --author Lastname --since 2026-11-20
     python3 main.py --keyword lattice --json > out.json
     python3 main.py --config config.toml              # filters from a config file
     python3 main.py -c config.toml --preview out.html # write the digest email as HTML
