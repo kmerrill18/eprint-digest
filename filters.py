@@ -35,7 +35,11 @@ def _strip_accents(s: str) -> str:
 
 
 def _fold(s: str) -> str:
-    """Strip accents, so "Ağırtaş" and "Agirtas" compare equal."""
+    """Lowercase and strip accents, so "Ağırtaş" and "agirtas" compare equal.
+
+    Used for author matching, which is plain substring search and so has no
+    case-insensitive flag. Keywords use _strip_accents + re.IGNORECASE instead.
+    """
     return _strip_accents(s.casefold())
 
 
