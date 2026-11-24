@@ -16,7 +16,7 @@ keywords = [
 
 # Text searched in author names (case and accents ignored).
 authors = [
-  "Ostrovsky",
+  "MyFavAuthor",
 ]
 
 [email]
