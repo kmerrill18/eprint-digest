@@ -1,0 +1,88 @@
+"""Filters for selecting which harvested papers go in the digest."""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from dataclasses import dataclass, field
+from typing import Iterable, Iterator
+
+from harvest import Paper
+
+# Letters that don't decompose into base letter + accent under Unicode rules.
+_SPECIAL = str.maketrans(
+    {
+        "ı": "i",
+        "ø": "o",
+        "Ø": "O",
+        "ł": "l",
+        "Ł": "L",
+        "đ": "d",
+        "Đ": "D",
+        "ß": "ss",
+        "æ": "ae",
+        "Æ": "AE",
+        "œ": "oe",
+        "Œ": "OE",
+    }
+)
+
+
+def _strip_accents(s: str) -> str:
+    """Remove accents without changing case: "Ağırtaş" -> "Agirtas"."""
+    s = unicodedata.normalize("NFKD", s.translate(_SPECIAL))
+    return "".join(c for c in s if not unicodedata.combining(c))
+
+
+def _fold(s: str) -> str:
+    """Strip accents, so "Ağırtaş" and "Agirtas" compare equal."""
+    return _strip_accents(s.casefold())
+
+
+@dataclass
+class Filter:
+    r"""Which papers to keep.
+
+    Each field is either None (don't filter on this) or a list of terms.
+    Matching ignores case and accents and matches substrings, so "lattice" also
+    matches "Lattices", and "Ostrovsky" matches "Rafail Ostrovsky".
+
+    Keywords are regular expressions (e.g. r"\bMPC\b", r"post-?quantum").
+    Escape regex symbols to match them literally: r"C\+\+".
+    Keywords ignore case unless you turn it off: r"(?-i:\bMPC\b)".
+
+    When several fields are set, a paper is kept if it matches ANY of them
+    (e.g. "papers about lattices, plus anything by Ostrovsky").
+    """
+
+    keywords: list[str] | None = None  # searched in title + abstract
+    authors: list[str] | None = None  # searched in each author's name
+
+    _patterns: list[re.Pattern[str]] = field(
+        init=False, repr=False, default_factory=list
+    )
+
+    def __post_init__(self) -> None:
+        # Compile up front so a bad regex fails immediately, not mid-digest.
+        # Accents are stripped from both pattern and text; case is handled by
+        # re.IGNORECASE so patterns can turn it off with (?-i:...).
+        for k in self.keywords or []:
+            try:
+                self._patterns.append(re.compile(_strip_accents(k), re.IGNORECASE))
+            except re.error as e:
+                raise ValueError(f"invalid keyword regex {k!r}: {e}") from e
+
+    def matches(self, paper: Paper) -> bool:
+        checks = []
+        if self.keywords is not None:
+            # Keep case so patterns can opt into case-sensitivity, e.g. r"(?-i:MPC)".
+            text = _strip_accents(f"{paper.title}\n{paper.abstract}")
+            checks.append(any(p.search(text) for p in self._patterns))
+        if self.authors is not None:
+            names = [_fold(a) for a in paper.authors]
+            checks.append(any(_fold(q) in n for q in self.authors for n in names))
+        # No fields set means no filtering: keep everything.
+        return any(checks) if checks else True
+
+    def apply(self, papers: Iterable[Paper]) -> Iterator[Paper]:
+        return (p for p in papers if self.matches(p))
