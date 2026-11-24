@@ -1,0 +1,28 @@
+# Example settings for the weekly ePrint digest.
+# Copy to config.toml (which git ignores) and fill in your own values:
+#   cp config.example.toml config.toml
+#   python3 main.py --config config.toml
+
+[filter]
+# A paper is kept if it matches ANY keyword or ANY author.
+# Delete (or comment out) a line to turn that filter off entirely.
+
+# Regexes searched in title + abstract. Case and accents are ignored;
+# use (?-i:...) for case-sensitive. Single quotes = no backslash escaping needed.
+keywords = [
+  'lattice',
+  '\bMPC\b',
+]
+
+# Text searched in author names (case and accents ignored).
+authors = [
+  "Ostrovsky",
+]
+
+[email]
+from = "you@gmail.com"            # must be the account you log in with
+to = ["you@example.edu"]          # one or more recipients
+smtp_host = "smtp.gmail.com"
+smtp_port = 587
+# username = "you@gmail.com"      # defaults to `from`
+# The password is NOT stored here; it will come from an environment variable / GitHub secret.

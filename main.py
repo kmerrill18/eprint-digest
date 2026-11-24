@@ -5,6 +5,7 @@ Examples:
     python3 main.py --keyword lattice --keyword '\\bMPC\\b'
     python3 main.py --author Ostrovsky --since 2026-11-20
     python3 main.py --keyword lattice --json > out.json
+    python3 main.py --config config.toml              # filters from a config file
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import sys
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 
+from config import load_config
 from filters import Filter
 from harvest import harvest
 
@@ -38,8 +40,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-a", "--author", action="append",
         help="text searched in author names; repeat for more",
     )
+    p.add_argument(
+        "-c", "--config",
+        help="TOML file with [filter] settings (can't be combined with -k/-a)",
+    )
     p.add_argument("--json", action="store_true", help="print JSON instead of text")
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+    if args.config and (args.keyword or args.author):
+        p.error("use either --config or -k/-a, not both")
+    return args
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -53,9 +62,12 @@ def main(argv: list[str] | None = None) -> int:
         since = datetime.now(timezone.utc) - timedelta(days=args.days)
 
     try:
-        # Flags that weren't given stay None, which means "don't filter on this".
-        filt = Filter(keywords=args.keyword, authors=args.author)
-    except ValueError as e:
+        if args.config:
+            filt = load_config(args.config).filter
+        else:
+            # Flags that weren't given stay None, meaning "don't filter on this".
+            filt = Filter(keywords=args.keyword, authors=args.author)
+    except (ValueError, OSError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
 

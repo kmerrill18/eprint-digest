@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Personal digest settings (keywords, email addresses); see config.example.toml
+config.toml
