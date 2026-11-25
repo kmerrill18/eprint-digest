@@ -4,6 +4,7 @@
 #   Variable  DIGEST_FILTER_CONFIG          the [filter] section of your config.toml
 #   Secret    DIGEST_EMAIL_CONFIG           the [email] section of your config.toml
 #   Secret    SMTP_PASSWORD                 the Gmail app password for [email] from
+#   Secret    ANTHROPIC_API_KEY / OPENAI_API_KEY   (optional) key for the [llm] model's provider
 #
 # The config is split because variables are shown unmasked in run logs
 # (including each step's env), and logs of public repos are public. Filters
@@ -36,6 +37,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Write config from variable + secret
         env:
@@ -53,6 +58,9 @@ jobs:
       - name: Fetch, filter, and send digest
         env:
           EPRINT_DIGEST_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          # Only the key for the provider in [llm] model is needed; unset ones are empty.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         # Start at 12:00 UTC seven days ago, not "exactly 7 days before now",
         # so a late start this week can't leave a gap after last week's run.
         run: |

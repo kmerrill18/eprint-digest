@@ -76,17 +76,25 @@ class Filter:
             except re.error as e:
                 raise ValueError(f"invalid keyword regex {k!r}: {e}") from e
 
-    def matches(self, paper: Paper) -> bool:
-        checks = []
+    def match_reasons(self, paper: Paper) -> set[str]:
+        """Which filters matched: a subset of {"keyword", "author"}."""
+        reasons = set()
         if self.keywords is not None:
             # Keep case so patterns can opt into case-sensitivity, e.g. r"(?-i:MPC)".
             text = _strip_accents(f"{paper.title}\n{paper.abstract}")
-            checks.append(any(p.search(text) for p in self._patterns))
+            if any(p.search(text) for p in self._patterns):
+                reasons.add("keyword")
         if self.authors is not None:
             names = [_fold(a) for a in paper.authors]
-            checks.append(any(_fold(q) in n for q in self.authors for n in names))
+            if any(_fold(q) in n for q in self.authors for n in names):
+                reasons.add("author")
+        return reasons
+
+    def matches(self, paper: Paper) -> bool:
         # No fields set means no filtering: keep everything.
-        return any(checks) if checks else True
+        if self.keywords is None and self.authors is None:
+            return True
+        return bool(self.match_reasons(paper))
 
     def apply(self, papers: Iterable[Paper]) -> Iterator[Paper]:
         return (p for p in papers if self.matches(p))
