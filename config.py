@@ -24,9 +24,19 @@ class EmailConfig:
 
 
 @dataclass
+class LLMConfig:
+    interests: str
+    model: str = "anthropic/claude-opus-5-5"  # any LiteLLM model string
+    max_top_picks: int = 5
+    abstract_preview_chars: int = 300  # "Also relevant" previews; 0 = none, -1 = full
+    api_base: str | None = None  # for local/self-hosted servers
+
+
+@dataclass
 class Config:
     filter: Filter
     email: EmailConfig | None  # None if the [email] section is absent
+    llm: LLMConfig | None = None  # None if the [llm] section is absent
 
 
 def _check_keys(section: str, table: dict[str, Any], allowed: set[str]) -> None:
@@ -48,7 +58,7 @@ def _str_list(section: str, key: str, value: Any) -> list[str]:
 def load_config(path: str | Path) -> Config:
     with open(path, "rb") as f:
         data = tomllib.load(f)
-    _check_keys("top level", data, {"filter", "email"})
+    _check_keys("top level", data, {"filter", "email", "llm"})
 
     # [filter]: a missing key means "don't filter on this".
     ft = data.get("filter", {})
@@ -74,4 +84,30 @@ def load_config(path: str | Path) -> Config:
             username=et.get("username"),
         )
 
-    return Config(filter=filt, email=email)
+    llm = None
+    if "llm" in data:
+        lt = data["llm"]
+        _check_keys(
+            "llm", lt,
+            {"interests", "model", "max_top_picks", "abstract_preview_chars", "api_base"},
+        )
+        interests = lt.get("interests")
+        if not isinstance(interests, str) or not interests.strip():
+            raise ValueError("[llm] needs a non-empty `interests` paragraph")
+        llm = LLMConfig(
+            interests=interests.strip(),
+            model=lt.get("model", LLMConfig.model),
+            max_top_picks=_int("llm", "max_top_picks", lt.get("max_top_picks", 5), min_=0),
+            abstract_preview_chars=_int(
+                "llm", "abstract_preview_chars", lt.get("abstract_preview_chars", 300), min_=-1
+            ),
+            api_base=lt.get("api_base"),
+        )
+
+    return Config(filter=filt, email=email, llm=llm)
+
+
+def _int(section: str, key: str, value: Any, min_: int) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < min_:
+        raise ValueError(f"[{section}] {key} must be an integer >= {min_}")
+    return value

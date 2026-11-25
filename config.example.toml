@@ -19,6 +19,20 @@ authors = [
   "MyFavAuthor",
 ]
 
+# Optional: have an LLM pick top papers and find relevant ones your filters miss.
+# Delete this section to get the plain filter-only digest.
+[llm]
+interests = """
+Describe what you work on and what you'd most want to read, in plain language.
+E.g.: I work on zero-knowledge proofs and image provenance. Top priority: new
+proof systems and attacks. Less interested in pure implementation papers.
+"""
+max_top_picks = 5                     # at most this many "Top picks"
+abstract_preview_chars = 300          # "Also relevant" abstracts: 0 = none, -1 = full
+model = "anthropic/claude-opus-5-5"   # any LiteLLM model string, e.g. "openai/<model>",
+                                      # "ollama/<model>"; key from ANTHROPIC_API_KEY etc.
+# api_base = "http://localhost:11434" # for local/self-hosted servers
+
 [email]
 from = "you@gmail.com"            # must be the account you log in with
 to = ["you@example.edu"]          # one or more recipients

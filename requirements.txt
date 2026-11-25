@@ -1,0 +1,2 @@
+# Only needed for the optional [llm] ranking step.
+litellm==1.111.0
