@@ -19,12 +19,14 @@ A paper is kept if it matches **any** keyword or author. Omit a key to disable t
 
 ### Optional: LLM top picks
 
-Add an `[llm]` section (see `config.example.toml`) with a paragraph describing your interests. An LLM then reads **every** paper and the email gets:
+Add an `[llm]` section (see `config.example.toml`) with a paragraph describing your interests. An LLM then reads **every** title and abstract, and the email gets:
 
 1. **Top picks** (up to `max_top_picks`): full abstract plus why it was picked.
 2. **Also relevant**: all filter matches plus papers the LLM found relevant, tagged `[keyword]`/`[author]`/`[LLM]`, with abstracts shortened to `abstract_preview_chars`.
 
-With `[llm]` and no filters, only the LLM's picks are included. The email footer shows tokens used and an estimated cost (from LiteLLM's price table; check your provider's billing for actual charges). If the LLM step fails, you get the plain filter-only digest with a note.
+With `[llm]` and no filters, only the LLM's picks are included. 
+
+The email footer shows tokens used and an estimated cost (from LiteLLM's price table; check your provider's billing for actual charges). If the LLM step fails, you get the plain filter-only digest with a note.
 
 `model` is any [LiteLLM model string](https://docs.litellm.ai/docs/providers) (`anthropic/...`, `openai/...`, `ollama/...`). Set the provider's key, e.g. `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`.
 
